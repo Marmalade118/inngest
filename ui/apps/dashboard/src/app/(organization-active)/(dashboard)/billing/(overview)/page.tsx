@@ -7,12 +7,7 @@ import EntitlementListItem from '@/components/Billing/Addons/EntitlementListItem
 import BillingInformation from '@/components/Billing/BillingDetails/BillingInformation';
 import PaymentMethod from '@/components/Billing/BillingDetails/PaymentMethod';
 import { LimitBar, type Data } from '@/components/Billing/LimitBar';
-import {
-  isEnterprisePlan,
-  isHobbyFreePlan,
-  isHobbyPlan,
-  type Plan,
-} from '@/components/Billing/Plans/utils';
+import { isHobbyFreePlan, isHobbyPlan } from '@/components/Billing/Plans/utils';
 import {
   billingDetails as getBillingDetails,
   currentPlan as getCurrentPlan,
@@ -61,19 +56,13 @@ export default async function Page() {
     tooltipContent: 'A single durable function execution.',
   };
 
-  const getBillingModel = (
-    plan: Plan,
-    entitlements: EntitlementUsageQuery['account']['entitlements']
-  ) => {
-    if (isHobbyPlan(plan)) return 'hobby-executions';
-    if (plan.slug === 'pro-2025-08-08' || plan.slug === 'pro-2025-06-04') return 'pro-executions';
-    if (isEnterprisePlan(plan) && entitlements.executions.limit !== null)
-      return 'enterprise-executions';
-    return 'legacy-steps-runs';
+  const getBillingModel = (entitlements: EntitlementUsageQuery['account']['entitlements']) => {
+    if (entitlements.executions.limit !== null) return 'executions';
+    return 'steps-runs';
   };
 
-  const billingModel = getBillingModel(currentPlan, entitlements);
-  const isExecutionBasedPlan = billingModel !== 'legacy-steps-runs';
+  const billingModel = getBillingModel(entitlements);
+  const isExecutionBasedPlan = billingModel === 'executions';
   const steps: Data = {
     title: isExecutionBasedPlan ? 'Executions' : 'Steps',
     description: `${
@@ -170,11 +159,11 @@ export default async function Page() {
               href={pathCreator.billing({ tab: 'plans', ref: 'app-billing-page-overview' })}
             />
           </div>
-          {billingModel === 'legacy-steps-runs' && !legacyNoRunsPlan && (
+          {billingModel === 'steps-runs' && !legacyNoRunsPlan && (
             <LimitBar data={runs} className="my-4" />
           )}
-          {billingModel === 'legacy-steps-runs' && <LimitBar data={steps} className="mb-6" />}
-          {billingModel !== 'legacy-steps-runs' && <LimitBar data={executions} className="mb-6" />}
+          {billingModel === 'steps-runs' && <LimitBar data={steps} className="mb-6" />}
+          {billingModel === 'executions' && <LimitBar data={executions} className="mb-6" />}
           <div className="border-subtle mb-6 border" />
           <EntitlementListItem
             planName={currentPlan.name}
